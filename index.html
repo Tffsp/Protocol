@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Protocol">
+<meta name="theme-color" content="#000000">
+<title>Protocol</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23000'/%3E%3Ctext x='50' y='68' font-family='Arial Black' font-size='52' font-weight='900' text-anchor='middle' fill='%23cc1f1f'%3EP%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23000'/%3E%3Ctext x='50' y='68' font-family='Arial Black' font-size='52' font-weight='900' text-anchor='middle' fill='%23cc1f1f'%3EP%3C/text%3E%3C/svg%3E">
+<link rel="manifest" href='data:application/manifest+json;charset=utf-8,{"name":"Protocol","short_name":"Protocol","start_url":".","display":"standalone","background_color":"%23000000","theme_color":"%23000000","icons":[{"src":"data:image/svg%2Bxml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 512 512%27%3E%3Crect width=%27512%27 height=%27512%27 fill=%27%23000%27/%3E%3Ctext x=%27256%27 y=%27355%27 font-family=%27Arial Black%27 font-size=%27270%27 font-weight=%27900%27 text-anchor=%27middle%27 fill=%27%23cc1f1f%27%3EP%3C/text%3E%3C/svg%3E","sizes":"512x512","type":"image/svg+xml"}]}'>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { background: #000; height: 100%; overflow: hidden; }
+  body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+  #root { height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"] { -moz-appearance: textfield; }
+  select { -webkit-appearance: none; }
+</style>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useMemo, useCallback } = React;
+
+
+
+/* ═══════════════════════════════════════════════════════════════
+   PROTOCOL — Personal training tracker
+   Themed (light/dark/auto), color-customizable, fully editable
+   ═══════════════════════════════════════════════════════════════ */
+
+// ─── DEFAULT PROGRAM ───
+const DEFAULT_DAYS = [
+  { id: 'push', name: 'Push Day', exercises: [
+    { id: 'e_p1', name: 'Dips', weighted: 'optional' },
+    { id: 'e_p2', name: 'Incline Dumbbell Press', weighted: 'always' },
+    { id: 'e_p3', name: 'Military Press / Push Press', weighted: 'always' },
+    { id: 'e_p4', name: 'Lateral Raises', weighted: 'always' },
+    { id: 'e_p5', name: 'Tricep Pushdown', weighted: 'always' },
+  ]},
+  { id: 'pull', name: 'Pull Day', exercises: [
+    { id: 'e_pl1', name: 'Pull-ups', weighted: 'optional' },
+    { id: 'e_pl2', name: 'Barbell Row', weighted: 'always' },
+    { id: 'e_pl3', name: 'Cable Seated Row', weighted: 'always' },
+    { id: 'e_pl4', name: 'Lat Pulldown', weighted: 'always' },
+    { id: 'e_pl5', name: 'Bicep / Hammer Curl', weighted: 'always' },
+  ]},
+  { id: 'leg', name: 'Leg Day', exercises: [
+    { id: 'e_l1', name: 'Back Squat', weighted: 'always' },
+    { id: 'e_l2', name: 'Zercher Squat', weighted: 'always' },
+    { id: 'e_l3', name: 'Standing Calf Raises', weighted: 'always' },
+    { id: 'e_l4', name: 'Box / Broad Jump', weighted: 'optional' },
+    { id: 'e_l5', name: 'Leg Press', weighted: 'always' },
+    { id: 'e_l6', name: 'Bulgarian Split Squat', weighted: 'always' },
+  ]},
+  { id: 'upper', name: 'Upper Body Day', exercises: [
+    { id: 'e_u1', name: 'Pull-ups', weighted: 'optional' },
+    { id: 'e_u2', name: 'Dips', weighted: 'optional' },
+    { id: 'e_u3', name: 'Military / Overhead Press', weighted: 'always' },
+    { id: 'e_u4', name: 'Pendlay Row', weighted: 'always' },
+    { id: 'e_u5', name: 'Trap Bar Deadlift', weighted: 'always' },
+  ]},
+  { id: 'lower', name: 'Lower Body Day', exercises: [
+    { id: 'e_lo1', name: 'Back Squat', weighted: 'always' },
+    { id: 'e_lo2', name: 'Romanian Deadlift', weighted: 'always' },
+    { id: 'e_lo3', name: 'Broad Jump', weighted: 'optional' },
+    { id: 'e_lo4', name: 'Zercher Squat', weighted: 'always' },
+    { id: 'e_lo5', name: 'Standing Calf Raises', weighted: 'always' },
+  ]},
+  { id: 'full', name: 'Full Body Day (optional)', exercises: [
+    { id: 'e_f1', name: 'Power Clean', weighted: 'always' },
+    { id: 'e_f2', name: 'Pull-ups', weighted: 'optional' },
+    { id: 'e_f3', name: 'Dips', weighted: 'optional' },
+    { id: 'e_f4', name: 'Farmers Carry', weighted: 'always' },
+    { id: 'e_f5', name: 'Kettlebell Swing', weighted: 'always' },
+    { id: 'e_f6', name: 'Med Ball Rotational Throw', weighted: 'always' },
+  ]},
+];
+
+const DEFAULT_CARDIO = [
+  { id: 'z2', name: 'Zone 2 Jogging', fields: [
+    { key: 'distance', label: 'Distance', unit: 'km', step: '0.1' },
+    { key: 'duration', label: 'Duration', unit: 'min', step: '1' },
+    { key: 'avgHR', label: 'Avg HR', unit: 'bpm', step: '1' },
+  ]},
+  { id: 'sprint', name: 'Zone 4–5 Sprints', fields: [
+    { key: 'reps', label: 'Reps', unit: '#', step: '1' },
+    { key: 'distance', label: 'Per rep', unit: 'm', step: '5' },
+    { key: 'bestTime', label: 'Best time', unit: 'sec', step: '0.1' },
+  ]},
+  { id: 'ruck', name: 'Rucking', fields: [
+    { key: 'load', label: 'Load', unit: 'kg', step: '0.5' },
+    { key: 'distance', label: 'Distance', unit: 'km', step: '0.1' },
+    { key: 'duration', label: 'Duration', unit: 'min', step: '1' },
+  ]},
+  { id: 'mt', name: 'Muay Thai', fields: [
+    { key: 'rounds', label: 'Rounds', unit: '#', step: '1' },
+    { key: 'duration', label: 'Duration', unit: 'min', step: '1' },
+    { key: 'intensity', label: 'Intensity', unit: '/10', step: '1' },
+  ]},
+  { id: 'bjj', name: 'BJJ', fields: [
+    { key: 'rolls', label: 'Rolls', unit: '#', step: '1' },
+    { key: 'duration', label: 'Duration', unit: 'min', step: '1' },
+    { key: 'intensity', label: 'Intensity', unit: '/10', step: '1' },
+  ]},
+];
+
+const DEFAULT_SUPPLEMENTS = [
+  { id: 'preworkout',   name: 'Pre-Training Stack', dose: 'Creatine 5g + Collagen 15g + Vit C + Beta-Alanine 1.6g', timing: 'Take 60 min before training', slots: ['Pre-training'] },
+  { id: 'collagen2',    name: 'Collagen Peptide (2nd dose)', dose: '15 g + Vit C', timing: 'Take post-training with meal', slots: ['Post-training'] },
+  { id: 'betaalanine2', name: 'Beta-Alanine (2nd dose)', dose: '1.6 g', timing: 'Take in the evening', slots: ['Evening'] },
+  { id: 'd3k2',         name: 'Vitamin D3 + K2',   dose: '5000 IU + 100 mcg', timing: 'Take with breakfast', slots: ['With breakfast'] },
+  { id: 'fishoil',      name: 'Fish Oil (Omega-3)',dose: '3–4 g EPA+DHA', timing: 'Take with any meal', slots: ['With meal'] },
+  { id: 'magnesium',    name: 'Magnesium Glycinate', dose: '400 mg', timing: 'Take 30–60 min before sleep', slots: ['Before bed'] },
+  { id: 'zinc',         name: 'Zinc', dose: '20 mg', timing: 'Take before bed (avoid with dairy)', slots: ['Before bed'] },
+  { id: 'electrolytes', name: 'Electrolytes', dose: '1 serving', timing: 'During sessions over 60 min', slots: ['During training'] },
+];
+
+// ─── UTILS ───
+const todayISO = () => new Date().toISOString().slice(0, 10);
+const uid = (p) => `${p}_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
+
+// ─── STORAGE ───
+const KEYS = {
+  days: 'protocol_days_v1',
+  cardios: 'protocol_cardios_v1',
+  supplements: 'protocol_supplements_v1',
+  sessions: 'protocol_sessions_v1',
+  cardio: 'protocol_cardio_log_v1',
+  bw: 'protocol_bw_v1',
+  suppLog: 'protocol_supp_log_v1',
+  prefs: 'protocol_prefs_v1',
+};
+
+function sGet(key, fallback) {
+  try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : fallback; }
+  catch { return fallback; }
+}
+function sSet(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { console.error(e); }
+}
+
+// ─── THEME RESOLUTION ───
+function useResolvedTheme(themePref) {
+  const [systemDark, setSystemDark] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    setSystemDark(mq.matches);
+    const handler = (e) => setSystemDark(e.matches);
+    mq.addEventListener?.('change', handler);
+    return () => mq.removeEventListener?.('change', handler);
+  }, []);
+  return themePref === 'auto' ? (systemDark ? 'dark' : 'light') : themePref;
+}
+
+function buildPalette(theme, accent) {
+  const dark = {
+    bg: '#000000', bg2: '#0a0a0a', bg3: '#1a1a1a',
+    text: '#ffffff', text2: '#999999', text3: '#666666',
+    border: '#1a1a1a', border2: '#333333',
+    accent, accent2: '#ffffff',
+  };
+  const light = {
+    bg: '#ffffff', bg2: '#f5f5f5', bg3: '#eaeaea',
+    text: '#0a0a0a', text2: '#444444', text3: '#888888',
+    border: '#dddddd', border2: '#cccccc',
+    accent, accent2: '#0a0a0a',
+  };
+  return theme === 'light' ? light : dark;
+}
+
+// ─── CHART ───
+function Chart({ series, label, secondLabel, P }) {
+  if (!series.length || series.every(s => !s.data || s.data.length === 0)) {
+    return <div style={{ padding: '30px 10px', textAlign: 'center', color: P.text3, fontSize: 12, fontStyle: 'italic', background: P.bg2, border: `1px solid ${P.border}`, borderRadius: 4, marginBottom: 8 }}>No data yet</div>;
+  }
+  const W = 320, H = 160, pL = 38, pR = secondLabel ? 38 : 10, pT = 14, pB = 26;
+  const iW = W - pL - pR, iH = H - pT - pB;
+
+  const scaledSeries = series.map((s) => {
+    if (!s.data || s.data.length === 0) return { ...s, scaled: [] };
+    const vals = s.data.map(p => p.v);
+    let mn = Math.min(...vals), mx = Math.max(...vals);
+    if (mn === mx) { mn -= 1; mx += 1; }
+    const rng = mx - mn;
+    const mnD = mn - rng * 0.1, mxD = mx + rng * 0.1;
+    return { ...s, mn: mnD, mx: mxD, dR: mxD - mnD };
+  });
+
+  const allDates = [...new Set(series.flatMap(s => (s.data || []).map(p => p.d)))].sort();
+  const n = allDates.length;
+  const x = i => pL + (n === 1 ? iW / 2 : (i / (n - 1)) * iW);
+
+  const primary = scaledSeries[0];
+  const grid = [];
+  for (let i = 0; i <= 4; i++) {
+    const gy = pT + (i / 4) * iH;
+    const gv = primary.mx - (i / 4) * primary.dR;
+    grid.push(<line key={`g${i}`} x1={pL} y1={gy} x2={W - pR} y2={gy} stroke={P.border} strokeWidth="0.5" />);
+    grid.push(<text key={`tL${i}`} x={pL - 4} y={gy + 3} textAnchor="end" fill={primary.color} fontSize="8" fontFamily="monospace">{gv.toFixed(1)}</text>);
+  }
+  if (scaledSeries[1]) {
+    for (let i = 0; i <= 4; i++) {
+      const gy = pT + (i / 4) * iH;
+      const gv = scaledSeries[1].mx - (i / 4) * scaledSeries[1].dR;
+      grid.push(<text key={`tR${i}`} x={W - pR + 4} y={gy + 3} textAnchor="start" fill={scaledSeries[1].color} fontSize="8" fontFamily="monospace">{gv.toFixed(1)}</text>);
+    }
+  }
+
+  const paths = scaledSeries.map((s) => {
+    if (!s.data || s.data.length === 0) return null;
+    const y = v => pT + iH - ((v - s.mn) / s.dR) * iH;
+    let path = '';
+    s.data.forEach((p, i) => {
+      const dateIdx = allDates.indexOf(p.d);
+      const px = x(dateIdx), py = y(p.v);
+      path += i === 0 ? `M${px},${py}` : ` L${px},${py}`;
+    });
+    return { path, points: s.data.map(p => ({ x: x(allDates.indexOf(p.d)), y: y(p.v) })), color: s.color };
+  });
+
+  const lIdx = n === 1 ? [0] : n === 2 ? [0, n - 1] : [0, Math.floor((n - 1) / 2), n - 1];
+
+  return (
+    <div style={{ background: P.bg2, border: `1px solid ${P.border}`, borderRadius: 4, padding: '8px 4px 4px', marginBottom: 8 }}>
+      <div style={{ fontFamily: 'monospace', fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', margin: '0 6px 6px', fontWeight: 700, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
+        <span style={{ color: series[0].color }}>{label}</span>
+        {secondLabel && <span style={{ color: series[1].color, fontSize: 9 }}>{secondLabel}</span>}
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 160 }}>
+        {grid}
+        {paths.map((p, i) => p && (
+          <g key={i}>
+            <path d={p.path} stroke={p.color} strokeWidth="1.5" fill="none" strokeLinejoin="round" strokeLinecap="round" />
+            {p.points.map((pt, j) => <circle key={j} cx={pt.x} cy={pt.y} r="2.5" fill={p.color} stroke={P.bg} strokeWidth="1" />)}
+          </g>
+        ))}
+        {lIdx.map(i => <text key={`x${i}`} x={x(i)} y={H - 8} textAnchor="middle" fill={P.text3} fontSize="8" fontFamily="monospace">{allDates[i].slice(5)}</text>)}
+      </svg>
+    </div>
+  );
+}
+
+// ─── TOAST ───
+function useToast(P) {
+  const [m, set] = useState(null);
+  const show = useCallback(msg => { set(msg); setTimeout(() => set(null), 1600); }, []);
+  const el = m ? <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: P.accent, color: '#fff', padding: '10px 20px', borderRadius: 4, fontSize: 12, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', zIndex: 100, boxShadow: '0 4px 12px rgba(0,0,0,0.7)' }}>{m}</div> : null;
+  return [show, el];
+}
+
+// ─── MAIN ───
+function Protocol() {
+  const [tab, setTab] = useState('strength');
+  const [days, setDays] = useState(DEFAULT_DAYS);
+  const [cardios, setCardios] = useState(DEFAULT_CARDIO);
+  const [supplements, setSupplements] = useState(DEFAULT_SUPPLEMENTS);
+  const [sessions, setSessions] = useState([]);
+  const [cardioLog, setCardioLog] = useState([]);
+  const [bwLog, setBwLog] = useState([]);
+  const [suppLog, setSuppLog] = useState({});
+  const [prefs, setPrefs] = useState({ theme: 'dark', accent: '#cc1f1f' });
+  const [loaded, setLoaded] = useState(false);
+
+  const theme = useResolvedTheme(prefs.theme);
+  const P = useMemo(() => buildPalette(theme, prefs.accent), [theme, prefs.accent]);
+  const [toast, toastEl] = useToast(P);
+
+  useEffect(() => {
+    (async () => {
+      setDays(sGet(KEYS.days, DEFAULT_DAYS));
+      setCardios(sGet(KEYS.cardios, DEFAULT_CARDIO));
+      setSupplements(sGet(KEYS.supplements, DEFAULT_SUPPLEMENTS));
+      setSessions(sGet(KEYS.sessions, []));
+      setCardioLog(sGet(KEYS.cardio, []));
+      setBwLog(sGet(KEYS.bw, []));
+      setSuppLog(sGet(KEYS.suppLog, {}));
+      setPrefs(sGet(KEYS.prefs, { theme: 'dark', accent: '#cc1f1f' }));
+      setLoaded(true);
+    })();
+  }, []);
+
+  const saveDays = async (d) => { setDays(d); sSet(KEYS.days, d); };
+  const saveCardios = async (c) => { setCardios(c); sSet(KEYS.cardios, c); };
+  const saveSupplements = async (s) => { setSupplements(s); sSet(KEYS.supplements, s); };
+  const saveSessions = async (s) => { setSessions(s); sSet(KEYS.sessions, s); };
+  const saveCardioLog = async (c) => { setCardioLog(c); sSet(KEYS.cardio, c); };
+  const saveBw = async (b) => { setBwLog(b); sSet(KEYS.bw, b); };
+  const saveSuppLog = async (s) => { setSuppLog(s); sSet(KEYS.suppLog, s); };
+  const savePrefs = async (p) => { setPrefs(p); sSet(KEYS.prefs, p); };
+
+  if (!loaded) return <div style={{ background: '#000', color: '#cc1f1f', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'monospace', fontSize: 14, letterSpacing: 2 }}>LOADING...</div>;
+
+  const tabs = ['strength', 'cardio', 'supps', 'progress', 'history', 'settings'];
+
+  return (
+    <div style={{ background: P.bg, color: P.text, minHeight: '100vh', fontFamily: "-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,sans-serif", fontSize: 15, lineHeight: 1.5, maxWidth: 430, margin: '0 auto', transition: 'background 0.2s, color 0.2s' }}>
+      <div style={{ borderBottom: `1px solid ${P.border}`, padding: '14px 14px 12px', position: 'relative' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: P.accent }} />
+        <div style={{ fontSize: 22, fontWeight: 900, letterSpacing: -0.5, color: P.text, textTransform: 'uppercase' }}>PROTOCOL</div>
+      </div>
+      <div style={{ display: 'flex', background: P.bg2, borderBottom: `1px solid ${P.border}`, overflowX: 'auto' }}>
+        {tabs.map(t => (
+          <div key={t} onClick={() => setTab(t)} style={{ flex: '1 0 auto', minWidth: 64, padding: '11px 6px', fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: tab === t ? P.accent : P.text3, textAlign: 'center', borderBottom: tab === t ? `2px solid ${P.accent}` : '2px solid transparent', cursor: 'pointer', whiteSpace: 'nowrap' }}>{t === 'supps' ? 'Supps' : t}</div>
+        ))}
+      </div>
+      <div style={{ padding: '12px 14px 80px', minHeight: '70vh' }}>
+        {tab === 'strength' && <StrengthTab P={P} days={days} sessions={sessions} saveSessions={saveSessions} toast={toast} />}
+        {tab === 'cardio' && <CardioTab P={P} cardios={cardios} cardioLog={cardioLog} saveCardioLog={saveCardioLog} toast={toast} />}
+        {tab === 'supps' && <SuppsTab P={P} supplements={supplements} suppLog={suppLog} saveSuppLog={saveSuppLog} toast={toast} />}
+        {tab === 'progress' && <ProgressTab P={P} sessions={sessions} cardios={cardios} cardioLog={cardioLog} bwLog={bwLog} saveBw={saveBw} suppLog={suppLog} supplements={supplements} days={days} toast={toast} />}
+        {tab === 'history' && <HistoryTab P={P} sessions={sessions} cardios={cardios} cardioLog={cardioLog} saveSessions={saveSessions} saveCardioLog={saveCardioLog} days={days} toast={toast} />}
+        {tab === 'settings' && <SettingsTab P={P} days={days} saveDays={saveDays} cardios={cardios} saveCardios={saveCardios} supplements={supplements} saveSupplements={saveSupplements} prefs={prefs} savePrefs={savePrefs} sessions={sessions} cardioLog={cardioLog} bwLog={bwLog} suppLog={suppLog} saveSessions={saveSessions} saveCardioLog={saveCardioLog} saveBw={saveBw} saveSuppLog={saveSuppLog} toast={toast} />}
+      </div>
+      {toastEl}
+    </div>
+  );
+}
+
+// ═══ STRENGTH TAB ═══
+function StrengthTab({ P, days, sessions, saveSessions, toast }) {
+  const [date, setDate] = useState(todayISO());
+  const [selDayId, setSelDayId] = useState(null);
+  const [setData, setSetData] = useState({});
+
+  const day = days.find(d => d.id === selDayId);
+
+  const select = (id) => {
+    setSelDayId(id);
+    const d = days.find(x => x.id === id);
+    const init = {};
+    d.exercises.forEach(ex => { init[ex.id] = [{ w: '', r: '', bw: ex.weighted === 'optional' }, { w: '', r: '', bw: ex.weighted === 'optional' }, { w: '', r: '', bw: ex.weighted === 'optional' }]; });
+    setSetData(init);
+  };
+
+  const updateSet = (exId, idx, field, val) => {
+    setSetData(prev => {
+      const next = { ...prev };
+      next[exId] = [...next[exId]];
+      next[exId][idx] = { ...next[exId][idx], [field]: val };
+      return next;
+    });
+  };
+
+  const addSet = (exId, isOpt) => setSetData(prev => ({ ...prev, [exId]: [...prev[exId], { w: '', r: '', bw: isOpt }] }));
+  const removeSet = (exId, idx) => setSetData(prev => {
+    const next = { ...prev };
+    next[exId] = next[exId].filter((_, i) => i !== idx);
+    if (next[exId].length === 0) next[exId] = [{ w: '', r: '', bw: false }];
+    return next;
+  });
+
+  const findLast = (exName) => {
+    const sorted = [...sessions].sort((a, b) => b.date.localeCompare(a.date));
+    for (const s of sorted) {
+      const e = s.exercises.find(x => x.name === exName);
+      if (e && e.sets.length) return { date: s.date, sets: e.sets };
+    }
+    return null;
+  };
+
+  const save = async () => {
+    if (!selDayId || !date) { toast('Pick session and date'); return; }
+    const exercises = [];
+    day.exercises.forEach(ex => {
+      const valid = (setData[ex.id] || [])
+        .filter(s => s.r !== '' || s.w !== '')
+        .map(s => ({
+          weight: s.bw ? null : (s.w === '' ? null : +s.w),
+          reps: s.r === '' ? null : +s.r,
+          bw: !!s.bw,
+        }));
+      if (valid.length) exercises.push({ name: ex.name, exId: ex.id, sets: valid });
+    });
+    if (!exercises.length) { toast('Log at least one set'); return; }
+    const next = [...sessions, { id: uid('s'), date, dayId: day.id, dayName: day.name, exercises }];
+    await saveSessions(next);
+    setSelDayId(null); setSetData({});
+    toast('Saved');
+  };
+
+  return (<div>
+    <div style={{ display: 'flex', gap: 8, alignItems: 'center', background: P.bg2, border: `1px solid ${P.border}`, padding: '8px 12px', borderRadius: 4, marginBottom: 4 }}>
+      <label style={lbl(P)}>Date</label>
+      <input type="date" value={date} onChange={e => setDate(e.target.value)} style={{ ...inp(P), textAlign: 'left', border: 'none', background: 'transparent', padding: 0, flex: 1 }} />
+    </div>
+
+    <div style={lbl(P, 'mt')}>Select training day</div>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+      {days.map(d => (
+        <div key={d.id} onClick={() => select(d.id)} style={{ ...cardBase(P), ...(selDayId === d.id ? cardSel(P) : {}), cursor: 'pointer' }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 9, letterSpacing: 1.5, color: P.text3, textTransform: 'uppercase' }}>{d.exercises.length} exercises</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: selDayId === d.id ? P.accent : P.text, textTransform: 'uppercase', marginTop: 2 }}>{d.name}</div>
+        </div>
+      ))}
+    </div>
+
+    {day && (<div>
+      <div style={lbl(P, 'mt')}>{day.name}</div>
+      {day.exercises.length === 0 && <div style={{ padding: 30, textAlign: 'center', color: P.text3, fontSize: 13 }}>No exercises in this day. Edit it from <strong style={{ color: P.accent }}>Settings</strong>.</div>}
+      {day.exercises.map(ex => {
+        const exSets = setData[ex.id] || [{ w: '', r: '', bw: ex.weighted === 'optional' }];
+        const last = findLast(ex.name);
+        const isOpt = ex.weighted === 'optional';
+        return (<div key={ex.id} style={{ background: P.bg2, border: `1px solid ${P.border}`, borderLeft: `2px solid ${P.accent}`, padding: '10px 12px', marginBottom: 6, borderRadius: 3 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: P.text, textTransform: 'uppercase', letterSpacing: 0.3 }}>{ex.name}</div>
+          {isOpt && <div style={{ fontSize: 10, color: P.text3, fontFamily: 'monospace', marginTop: 2, letterSpacing: 1 }}>BW or weighted — toggle per set</div>}
+          {last && <div style={{ fontFamily: 'monospace', fontSize: 10, color: P.text3, marginTop: 3 }}>
+            <span style={{ color: P.accent }}>›</span> Last ({last.date}): {last.sets.map(s => s.bw ? `BW×${s.reps ?? '—'}` : `${s.weight ?? '—'}×${s.reps ?? '—'}`).join(' · ')}
+          </div>}
+          <div style={{ marginTop: 8 }}>
+            {exSets.map((s, i) => (
+              <div key={i} style={{ display: 'grid', gridTemplateColumns: isOpt ? '20px 50px 1fr 1fr 24px' : '20px 1fr 1fr 24px', gap: 4, marginBottom: 4, alignItems: 'center' }}>
+                <div style={{ fontFamily: 'monospace', fontSize: 11, color: P.text3, textAlign: 'center' }}>{i + 1}</div>
+                {isOpt && (
+                  <div onClick={() => updateSet(ex.id, i, 'bw', !s.bw)} style={{ background: s.bw ? P.accent : 'transparent', color: s.bw ? '#fff' : P.text3, border: `1px solid ${P.accent}`, borderRadius: 3, padding: '6px 0', fontSize: 9, fontWeight: 700, letterSpacing: 1, textAlign: 'center', cursor: 'pointer', textTransform: 'uppercase' }}>BW</div>
+                )}
+                {s.bw && isOpt
+                  ? <div style={{ background: P.bg, border: `1px solid ${P.border}`, color: P.text3, padding: '8px 4px', fontSize: 12, borderRadius: 3, textAlign: 'center', fontFamily: 'monospace' }}>—</div>
+                  : <input type="number" inputMode="decimal" step="0.5" placeholder="kg" value={s.w} onChange={e => updateSet(ex.id, i, 'w', e.target.value)} style={inp(P)} />
+                }
+                <input type="number" inputMode="numeric" placeholder="reps" value={s.r} onChange={e => updateSet(ex.id, i, 'r', e.target.value)} style={inp(P)} />
+                <button onClick={() => removeSet(ex.id, i)} style={btnMini(P)}>−</button>
+              </div>
+            ))}
+          </div>
+          <button onClick={() => addSet(ex.id, isOpt)} style={{ background: 'transparent', border: `1px solid ${P.accent}`, color: P.accent, width: '100%', padding: 6, borderRadius: 3, fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: 'pointer', marginTop: 4 }}>+ Set</button>
+        </div>);
+      })}
+      {day.exercises.length > 0 && <button onClick={save} style={btnPrimary(P)}>Save Session</button>}
+    </div>)}
+  </div>);
+}
+
+// ═══ CARDIO TAB ═══
+function CardioTab({ P, cardios, cardioLog, saveCardioLog, toast }) {
+  const [date, setDate] = useState(todayISO());
+  const [selId, setSelId] = useState(null);
+  const [vals, setVals] = useState({});
+  const [notes, setNotes] = useState('');
+
+  const def = cardios.find(c => c.id === selId);
+
+  const select = (id) => { setSelId(id); setVals({}); setNotes(''); };
+
+  const findLast = (cid) => {
+    const sorted = [...cardioLog].sort((a, b) => b.date.localeCompare(a.date));
+    return sorted.find(c => c.cardioId === cid) || null;
+  };
+
+  const save = async () => {
+    if (!selId || !date) { toast('Pick session and date'); return; }
+    const values = {}; let any = false;
+    def.fields.forEach(f => { const v = vals[f.key]; if (v === '' || v == null) values[f.key] = null; else { values[f.key] = +v; any = true; } });
+    if (!any && !notes.trim()) { toast('Enter at least one value'); return; }
+    const next = [...cardioLog, { id: uid('c'), date, cardioId: def.id, cardioName: def.name, values, notes: notes.trim() }];
+    await saveCardioLog(next);
+    setSelId(null); setVals({}); setNotes('');
+    toast('Saved');
+  };
+
+  return (<div>
+    <div style={{ display: 'flex', gap: 8, alignItems: 'center', background: P.bg2, border: `1px solid ${P.border}`, padding: '8px 12px', borderRadius: 4, marginBottom: 4 }}>
+      <label style={lbl(P)}>Date</label>
+      <input type="date" value={date} onChange={e => setDate(e.target.value)} style={{ ...inp(P), textAlign: 'left', border: 'none', background: 'transparent', padding: 0, flex: 1 }} />
+    </div>
+    <div style={lbl(P, 'mt')}>Select cardio</div>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+      {cardios.map(c => (
+        <div key={c.id} onClick={() => select(c.id)} style={{ ...cardBase(P), ...(selId === c.id ? cardSel(P) : {}), cursor: 'pointer' }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: selId === c.id ? P.accent : P.text, textTransform: 'uppercase' }}>{c.name}</div>
+        </div>
+      ))}
+    </div>
+    {def && (<div>
+      <div style={lbl(P, 'mt')}>{def.name}</div>
+      <div style={{ background: P.bg2, border: `1px solid ${P.border}`, borderLeft: `2px solid ${P.accent}`, padding: '10px 12px', borderRadius: 3 }}>
+        {(() => { const l = findLast(def.id); return l ? <div style={{ fontFamily: 'monospace', fontSize: 10, color: P.text3, marginBottom: 8 }}><span style={{ color: P.accent }}>›</span> Last ({l.date}): {def.fields.map(f => `${l.values[f.key] ?? '—'} ${f.unit}`).join(' · ')}</div> : null; })()}
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(def.fields.length, 3)},1fr)`, gap: 6 }}>
+          {def.fields.map(f => (
+            <div key={f.key}>
+              <div style={{ fontFamily: 'monospace', fontSize: 8, color: P.text3, textAlign: 'center', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 3 }}>{f.label} ({f.unit})</div>
+              <input type="number" inputMode="decimal" step={f.step} value={vals[f.key] ?? ''} onChange={e => setVals(p => ({ ...p, [f.key]: e.target.value }))} style={inp(P)} />
+            </div>
+          ))}
+        </div>
+        <div style={{ marginTop: 8 }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 8, color: P.text3, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 3 }}>Notes</div>
+          <input type="text" value={notes} onChange={e => setNotes(e.target.value)} placeholder="optional" style={{ ...inp(P), textAlign: 'left', padding: '8px 8px' }} />
+        </div>
+      </div>
+      <button onClick={save} style={btnPrimary(P)}>Save Session</button>
+    </div>)}
+  </div>);
+}
+
+// ═══ SUPPS TAB ═══
+function SuppsTab({ P, supplements, suppLog, saveSuppLog, toast }) {
+  const [date, setDate] = useState(todayISO());
+  const dayData = suppLog[date] || {};
+
+  const toggle = async (suppId, slotIdx) => {
+    const key = `${suppId}_${slotIdx}`;
+    const next = { ...suppLog };
+    if (!next[date]) next[date] = {};
+    if (next[date][key]) delete next[date][key];
+    else next[date][key] = true;
+    if (Object.keys(next[date]).length === 0) delete next[date];
+    await saveSuppLog(next);
+  };
+
+  const streak = useMemo(() => {
+    const dates = Object.keys(suppLog).filter(d => Object.keys(suppLog[d]).length > 0).sort().reverse();
+    if (!dates.length) return 0;
+    let count = 0;
+    let cur = new Date(todayISO());
+    for (const d of dates) {
+      const dDate = new Date(d);
+      const diff = Math.round((cur - dDate) / 86400000);
+      if (diff === 0 || diff === count) { count++; cur = dDate; }
+      else break;
+    }
+    return count;
+  }, [suppLog]);
+
+  const totalSlots = supplements.reduce((a, s) => a + s.slots.length, 0);
+  const checkedToday = Object.keys(dayData).length;
+
+  return (<div>
+    <div style={{ display: 'flex', gap: 8, alignItems: 'center', background: P.bg2, border: `1px solid ${P.border}`, padding: '8px 12px', borderRadius: 4, marginBottom: 4 }}>
+      <label style={lbl(P)}>Date</label>
+      <input type="date" value={date} onChange={e => setDate(e.target.value)} style={{ ...inp(P), textAlign: 'left', border: 'none', background: 'transparent', padding: 0, flex: 1 }} />
+    </div>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginTop: 10, marginBottom: 12 }}>
+      <div style={statCard(P)}><div style={statVal(P)}>{checkedToday}/{totalSlots}</div><div style={statLbl(P)}>This day</div></div>
+      <div style={statCard(P)}><div style={statVal(P)}>{streak}</div><div style={statLbl(P)}>Streak</div></div>
+    </div>
+    <div style={lbl(P)}>Stack</div>
+    {supplements.length === 0 && <div style={{ padding: 30, textAlign: 'center', color: P.text3, fontSize: 13 }}>No supplements yet. Add them from <strong style={{ color: P.accent }}>Settings</strong>.</div>}
+    {supplements.map(s => (
+      <div key={s.id} style={{ background: P.bg2, border: `1px solid ${P.border}`, borderLeft: `2px solid ${P.accent}`, padding: '10px 12px', marginBottom: 6, borderRadius: 3 }}>
+        <div style={{ marginBottom: 8 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: P.text, textTransform: 'uppercase', letterSpacing: 0.3 }}>{s.name}</div>
+          <div style={{ fontFamily: 'monospace', fontSize: 10, color: P.accent, letterSpacing: 0.5, marginTop: 1 }}>{s.dose}</div>
+          {s.timing && <div style={{ fontSize: 11, color: P.text3, marginTop: 3, fontStyle: 'italic' }}>{s.timing}</div>}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: s.slots.length > 1 ? '1fr 1fr' : '1fr', gap: 4 }}>
+          {s.slots.map((slot, idx) => {
+            const checked = dayData[`${s.id}_${idx}`];
+            return (
+              <div key={idx} onClick={() => toggle(s.id, idx)} style={{ background: checked ? P.accent : 'transparent', border: `1px solid ${checked ? P.accent : P.border2}`, color: checked ? '#fff' : P.text2, padding: '8px 10px', borderRadius: 3, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, fontWeight: 600 }}>
+                <div style={{ width: 14, height: 14, border: '1.5px solid currentColor', borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, lineHeight: 1, fontWeight: 900 }}>{checked ? '✓' : ''}</div>
+                {slot}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    ))}
+  </div>);
+}
+
+// ═══ PROGRESS TAB ═══
+function ProgressTab({ P, sessions, cardios, cardioLog, bwLog, saveBw, suppLog, supplements, days, toast }) {
+  const [view, setView] = useState('bw');
+  const [selA, setSelA] = useState('');
+  const [selB, setSelB] = useState('');
+  const [selCardio, setSelCardio] = useState('');
+  const [bwInput, setBwInput] = useState('');
+
+  const todayBw = bwLog.find(b => b.date === todayISO());
+
+  const saveBwEntry = async () => {
+    const v = +bwInput;
+    if (!v || v < 30 || v > 250) { toast('Invalid weight'); return; }
+    await saveBw([...bwLog, { date: todayISO(), kg: v }]);
+    setBwInput('');
+    toast('Bodyweight saved');
+  };
+
+  // Build name list from BOTH historical sessions AND current days config
+  const exNames = useMemo(() => {
+    const s = new Set();
+    sessions.forEach(ss => ss.exercises.forEach(e => s.add(e.name)));
+    days.forEach(d => d.exercises.forEach(e => s.add(e.name)));
+    return [...s].sort();
+  }, [sessions, days]);
+
+  const currentA = selA && exNames.includes(selA) ? selA : (exNames[0] || '');
+
+  const buildLiftSeries = (name) => {
+    if (!name) return { top: [], vol: [] };
+    const filtered = sessions.filter(s => s.exercises.some(e => e.name === name)).sort((a, b) => a.date.localeCompare(b.date));
+    const top = [], vol = [];
+    filtered.forEach(s => {
+      const ex = s.exercises.find(e => e.name === name);
+      let tw = 0, tr = 0, v = 0, hasNonBw = false;
+      ex.sets.forEach(st => {
+        if (st.bw) { v += (st.reps || 0); return; }
+        if (st.weight == null || st.reps == null) return;
+        if (st.weight > tw || (st.weight === tw && st.reps > tr)) { tw = st.weight; tr = st.reps; }
+        v += st.weight * st.reps;
+        hasNonBw = true;
+      });
+      if (hasNonBw && tw > 0) top.push({ d: s.date, v: tw });
+      if (v > 0) vol.push({ d: s.date, v });
+    });
+    return { top, vol };
+  };
+
+  const seriesA = buildLiftSeries(currentA);
+  const seriesB = selB ? buildLiftSeries(selB) : null;
+
+  const usedCardio = useMemo(() => [...new Set(cardioLog.map(c => c.cardioId))], [cardioLog]);
+  const currentCardio = selCardio && usedCardio.includes(selCardio) ? selCardio : (usedCardio[0] || '');
+  const cardDef = cardios.find(c => c.id === currentCardio);
+  const cardData = useMemo(() => {
+    if (!currentCardio) return { fields: {}, pace: [], count: 0, totalMin: 0 };
+    const filtered = cardioLog.filter(c => c.cardioId === currentCardio).sort((a, b) => a.date.localeCompare(b.date));
+    const fields = {}; const pace = []; let totalMin = 0;
+    if (cardDef) cardDef.fields.forEach(f => { fields[f.key] = { label: `${f.label} (${f.unit})`, data: [] }; });
+    filtered.forEach(c => {
+      totalMin += (c.values.duration ?? 0);
+      if (cardDef) cardDef.fields.forEach(f => { const v = c.values[f.key]; if (v != null) fields[f.key].data.push({ d: c.date, v }); });
+      if (c.values.distance && c.values.duration && c.values.distance > 0) pace.push({ d: c.date, v: c.values.duration / c.values.distance });
+    });
+    return { fields, pace, count: filtered.length, totalMin };
+  }, [cardioLog, currentCardio, cardDef]);
+
+  const bwData = useMemo(() => [...bwLog].sort((a, b) => a.date.localeCompare(b.date)).map(b => ({ d: b.date, v: b.kg })), [bwLog]);
+
+  const suppData = useMemo(() => {
+    const total = supplements.reduce((a, s) => a + s.slots.length, 0);
+    if (total === 0) return [];
+    return Object.keys(suppLog).sort().map(d => ({ d, v: Math.round((Object.keys(suppLog[d]).length / total) * 100) }));
+  }, [suppLog, supplements]);
+
+  const chip = (active) => ({ background: active ? P.accent : P.bg2, border: `1px solid ${active ? P.accent : P.border}`, color: active ? '#fff' : P.text2, padding: '6px 12px', fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', borderRadius: 16, cursor: 'pointer', whiteSpace: 'nowrap' });
+
+  return (<div>
+    <div style={lbl(P)}>View</div>
+    <div style={{ display: 'flex', gap: 6, marginBottom: 10, overflowX: 'auto', paddingBottom: 4 }}>
+      {[['bw', 'Bodyweight'], ['lift', 'Lift'], ['cardio', 'Cardio'], ['supps', 'Supps']].map(([v, label]) => <div key={v} onClick={() => setView(v)} style={chip(view === v)}>{label}</div>)}
+    </div>
+
+    {view === 'bw' && (<div>
+      <div style={{ background: P.bg2, border: `1px solid ${P.border}`, borderLeft: `2px solid ${P.accent}`, padding: '10px 12px', marginBottom: 10, borderRadius: 3, display: 'flex', alignItems: 'center', gap: 10 }}>
+        {todayBw
+          ? <div style={{ fontSize: 12, color: P.text2 }}>Today's BW: <strong style={{ color: P.accent }}>{todayBw.kg} kg</strong></div>
+          : <>
+            <div style={{ flex: 1, fontSize: 12, color: P.text2 }}>Log today's BW (kg):</div>
+            <input type="number" inputMode="decimal" step="0.1" value={bwInput} onChange={e => setBwInput(e.target.value)} placeholder="80.0" style={inp(P, 72)} />
+            <button onClick={saveBwEntry} style={{ background: P.accent, color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 3, fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', cursor: 'pointer' }}>Save</button>
+          </>}
+      </div>
+      {!bwData.length ? <div style={empty(P)}>No bodyweight logged yet.</div> : <>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginBottom: 10 }}>
+          <div style={statCard(P)}><div style={statVal(P)}>{bwData[bwData.length-1].v.toFixed(1)}</div><div style={statLbl(P)}>Latest (kg)</div></div>
+          <div style={statCard(P)}><div style={{...statVal(P), color: (bwData[bwData.length-1].v - bwData[0].v) >= 0 ? P.accent2 : P.accent}}>{(bwData[bwData.length-1].v - bwData[0].v) >= 0 ? '+' : ''}{(bwData[bwData.length-1].v - bwData[0].v).toFixed(1)}</div><div style={statLbl(P)}>Δ</div></div>
+          <div style={statCard(P)}><div style={statVal(P)}>{bwData.length}</div><div style={statLbl(P)}>Logs</div></div>
+        </div>
+        <Chart series={[{ data: bwData, color: P.accent }]} label="Bodyweight (kg)" P={P} />
+      </>}
+    </div>)}
+
+    {view === 'lift' && (<div>
+      {!exNames.length ? <div style={empty(P)}>No exercises yet. Add some in Settings or log a session.</div> : <>
+        <div style={lbl(P)}>Exercise A (accent color)</div>
+        <select value={currentA} onChange={e => setSelA(e.target.value)} style={selSty(P)}>
+          {exNames.map(n => <option key={n} value={n}>{n}</option>)}
+        </select>
+        <div style={lbl(P)}>Compare with (optional)</div>
+        <select value={selB} onChange={e => setSelB(e.target.value)} style={selSty(P)}>
+          <option value="">— None —</option>
+          {exNames.filter(n => n !== currentA).map(n => <option key={n} value={n}>{n}</option>)}
+        </select>
+        {seriesA.top.length === 0 && seriesA.vol.length === 0 && <div style={empty(P)}>No logged data for "{currentA}" yet. Log it from the Strength tab.</div>}
+        <Chart
+          series={selB ? [{ data: seriesA.top, color: P.accent }, { data: seriesB.top, color: P.accent2 }] : [{ data: seriesA.top, color: P.accent }]}
+          label={`Top Set (kg)${selB ? ' — '+currentA : ''}`}
+          secondLabel={selB ? selB : null}
+          P={P}
+        />
+        <Chart
+          series={selB ? [{ data: seriesA.vol, color: P.accent }, { data: seriesB.vol, color: P.accent2 }] : [{ data: seriesA.vol, color: P.accent }]}
+          label={`Total Volume${selB ? ' — '+currentA : ''}`}
+          secondLabel={selB ? selB : null}
+          P={P}
+        />
+      </>}
+    </div>)}
+
+    {view === 'cardio' && (<div>
+      {!usedCardio.length ? <div style={empty(P)}>No cardio logged yet.</div> : <>
+        <select value={currentCardio} onChange={e => setSelCardio(e.target.value)} style={selSty(P)}>
+          {usedCardio.map(id => { const d = cardios.find(c => c.id === id); return <option key={id} value={id}>{d ? d.name : id}</option>; })}
+        </select>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginBottom: 10 }}>
+          <div style={statCard(P)}><div style={statVal(P)}>{cardData.count}</div><div style={statLbl(P)}>Sessions</div></div>
+          <div style={statCard(P)}><div style={statVal(P)}>{Math.round(cardData.totalMin)}</div><div style={statLbl(P)}>Total Min</div></div>
+          <div style={statCard(P)}><div style={statVal(P)}>{cardData.pace.length ? cardData.pace[cardData.pace.length-1].v.toFixed(2) : '—'}</div><div style={statLbl(P)}>Pace min/km</div></div>
+        </div>
+        {cardData.pace.length > 0 && <Chart series={[{ data: cardData.pace, color: P.accent }]} label="Pace (min/km — lower = faster)" P={P} />}
+        {cardDef && cardDef.fields.map(f => { const d = cardData.fields[f.key]; return d && d.data.length ? <Chart key={f.key} series={[{ data: d.data, color: P.accent }]} label={d.label} P={P} /> : null; })}
+      </>}
+    </div>)}
+
+    {view === 'supps' && (<div>
+      {!suppData.length ? <div style={empty(P)}>No supplements tracked yet.</div> : <>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 10 }}>
+          <div style={statCard(P)}><div style={statVal(P)}>{suppData.length}</div><div style={statLbl(P)}>Days Tracked</div></div>
+          <div style={statCard(P)}><div style={statVal(P)}>{Math.round(suppData.reduce((a, x) => a + x.v, 0) / suppData.length)}%</div><div style={statLbl(P)}>Avg Adherence</div></div>
+        </div>
+        <Chart series={[{ data: suppData, color: P.accent }]} label="Daily adherence (%)" P={P} />
+      </>}
+    </div>)}
+  </div>);
+}
+
+// ═══ HISTORY TAB ═══
+function HistoryTab({ P, sessions, cardios, cardioLog, saveSessions, saveCardioLog, days, toast }) {
+  const [filter, setFilter] = useState('all');
+  const [expanded, setExpanded] = useState(null);
+  const [editingSession, setEditingSession] = useState(null);
+
+  const merged = useMemo(() => {
+    let items = [];
+    if (filter !== 'cardio') items.push(...sessions.map(s => ({ ...s, kind: 'lift' })));
+    if (filter !== 'lift') items.push(...cardioLog.map(c => ({ ...c, kind: 'cardio' })));
+    items.sort((a, b) => b.date.localeCompare(a.date) || (b.id || '').localeCompare(a.id || ''));
+    return items;
+  }, [sessions, cardioLog, filter]);
+
+  const del = async (item) => {
+    if (!confirm('Delete this session?')) return;
+    if (item.kind === 'lift') await saveSessions(sessions.filter(s => s.id !== item.id));
+    else await saveCardioLog(cardioLog.filter(c => c.id !== item.id));
+    toast('Deleted');
+  };
+
+  if (editingSession) {
+    return <SessionEditor session={editingSession} sessions={sessions} cardios={cardios} cardioLog={cardioLog} saveSessions={saveSessions} saveCardioLog={saveCardioLog} onClose={() => setEditingSession(null)} toast={toast} P={P} />;
+  }
+
+  const chip = (active) => ({ background: active ? P.accent : P.bg2, border: `1px solid ${active ? P.accent : P.border}`, color: active ? '#fff' : P.text2, padding: '6px 12px', fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', borderRadius: 16, cursor: 'pointer' });
+
+  return (<div>
+    <div style={lbl(P)}>All sessions (newest first)</div>
+    <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+      {['all', 'lift', 'cardio'].map(f => <div key={f} onClick={() => setFilter(f)} style={chip(filter === f)}>{f}</div>)}
+    </div>
+    {!merged.length ? <div style={empty(P)}>No sessions yet.</div>
+    : merged.map(item => {
+      const isOpen = expanded === item.id;
+      const isLift = item.kind === 'lift';
+      return (<div key={item.id} style={{ background: P.bg2, border: `1px solid ${P.border}`, borderLeft: `2px solid ${isLift ? P.accent : P.accent2}`, padding: '10px 12px', marginBottom: 6, borderRadius: 3 }}>
+        <div onClick={() => setExpanded(isOpen ? null : item.id)} style={{ cursor: 'pointer' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: P.text, textTransform: 'uppercase' }}>{isLift ? item.dayName : item.cardioName}</div>
+            <div style={{ fontFamily: 'monospace', fontSize: 10, color: P.text3, letterSpacing: 1 }}>{item.date}</div>
+          </div>
+          <div style={{ fontSize: 11, color: P.text2 }}>
+            {isLift ? `${item.exercises.length} exercises · ${item.exercises.reduce((a, e) => a + e.sets.length, 0)} sets` : `Cardio${item.notes ? ' · ' + item.notes : ''}`}
+          </div>
+        </div>
+        {isOpen && (<div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${P.border}`, fontFamily: 'monospace', fontSize: 11, color: P.text2, lineHeight: 1.7 }}>
+          {isLift ? item.exercises.map(e => (
+            <div key={e.name} style={{ marginBottom: 6 }}>
+              <span style={{ color: P.accent, fontWeight: 700 }}>{e.name}</span><br />
+              {e.sets.map(s => s.bw ? `BW×${s.reps ?? '—'}` : `${s.weight ?? '—'}×${s.reps ?? '—'}`).join(' · ')}
+            </div>
+          )) : (() => {
+            const d = cardios.find(c => c.id === item.cardioId);
+            return d ? d.fields.map(f => <div key={f.key}><span style={{ color: P.accent }}>{f.label}:</span> {item.values[f.key] ?? '—'} {f.unit}</div>) : null;
+          })()}
+          <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+            <button onClick={() => setEditingSession(item)} style={{ flex: 1, background: 'transparent', border: `1px solid ${P.text}`, color: P.text, padding: 6, borderRadius: 3, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', cursor: 'pointer' }}>Edit</button>
+            <button onClick={() => del(item)} style={{ flex: 1, background: 'transparent', border: `1px solid ${P.accent}`, color: P.accent, padding: 6, borderRadius: 3, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', cursor: 'pointer' }}>Delete</button>
+          </div>
+        </div>)}
+      </div>);
+    })}
+  </div>);
+}
+
+// ═══ SESSION EDITOR ═══
+function SessionEditor({ session, sessions, cardios, cardioLog, saveSessions, saveCardioLog, onClose, toast, P }) {
+  const isLift = !session.cardioId;
+  const [date, setDate] = useState(session.date);
+  const [exData, setExData] = useState(() => {
+    if (!isLift) return {};
+    const init = {};
+    session.exercises.forEach(e => { init[e.name] = e.sets.map(s => ({ w: s.weight ?? '', r: s.reps ?? '', bw: !!s.bw })); });
+    return init;
+  });
+  const [vals, setVals] = useState(session.values || {});
+  const [notes, setNotes] = useState(session.notes || '');
+
+  const updateSet = (name, idx, field, val) => {
+    setExData(prev => {
+      const next = { ...prev };
+      next[name] = [...next[name]];
+      next[name][idx] = { ...next[name][idx], [field]: val };
+      return next;
+    });
+  };
+  const addSet = (name) => setExData(prev => ({ ...prev, [name]: [...prev[name], { w: '', r: '', bw: false }] }));
+  const removeSet = (name, idx) => setExData(prev => {
+    const next = { ...prev };
+    next[name] = next[name].filter((_, i) => i !== idx);
+    if (next[name].length === 0) next[name] = [{ w: '', r: '', bw: false }];
+    return next;
+  });
+
+  const save = async () => {
+    if (isLift) {
+      const newEx = session.exercises.map(e => {
+        const valid = (exData[e.name] || []).filter(s => s.r !== '' || s.w !== '').map(s => ({
+          weight: s.bw ? null : (s.w === '' ? null : +s.w),
+          reps: s.r === '' ? null : +s.r,
+          bw: !!s.bw,
+        }));
+        return { ...e, sets: valid };
+      }).filter(e => e.sets.length > 0);
+      if (!newEx.length) { toast('Need at least one set'); return; }
+      const updated = sessions.map(s => s.id === session.id ? { ...s, date, exercises: newEx } : s);
+      await saveSessions(updated);
+    } else {
+      const def = cardios.find(c => c.id === session.cardioId);
+      const values = {}; let any = false;
+      def.fields.forEach(f => { const v = vals[f.key]; if (v === '' || v == null) values[f.key] = null; else { values[f.key] = +v; any = true; } });
+      if (!any && !notes.trim()) { toast('Need at least one value'); return; }
+      const updated = cardioLog.map(c => c.id === session.id ? { ...c, date, values, notes: notes.trim() } : c);
+      await saveCardioLog(updated);
+    }
+    toast('Updated');
+    onClose();
+  };
+
+  return (<div>
+    <div onClick={onClose} style={{ display: 'flex', alignItems: 'center', gap: 6, color: P.accent, fontFamily: 'monospace', fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', cursor: 'pointer', padding: '6px 0', marginBottom: 6 }}>‹ Back</div>
+    <div style={lbl(P)}>Edit · {isLift ? session.dayName : session.cardioName}</div>
+    <div style={{ display: 'flex', gap: 8, alignItems: 'center', background: P.bg2, border: `1px solid ${P.border}`, padding: '8px 12px', borderRadius: 4, marginBottom: 8 }}>
+      <label style={lbl(P)}>Date</label>
+      <input type="date" value={date} onChange={e => setDate(e.target.value)} style={{ ...inp(P), textAlign: 'left', border: 'none', background: 'transparent', padding: 0, flex: 1 }} />
+    </div>
+    {isLift && session.exercises.map(ex => {
+      const sets = exData[ex.name] || [];
+      return (<div key={ex.name} style={{ background: P.bg2, border: `1px solid ${P.border}`, borderLeft: `2px solid ${P.accent}`, padding: '10px 12px', marginBottom: 6, borderRadius: 3 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: P.text, textTransform: 'uppercase' }}>{ex.name}</div>
+        {sets.map((s, i) => (
+          <div key={i} style={{ display: 'grid', gridTemplateColumns: '20px 50px 1fr 1fr 24px', gap: 4, marginTop: 6, alignItems: 'center' }}>
+            <div style={{ fontFamily: 'monospace', fontSize: 11, color: P.text3, textAlign: 'center' }}>{i + 1}</div>
+            <div onClick={() => updateSet(ex.name, i, 'bw', !s.bw)} style={{ background: s.bw ? P.accent : 'transparent', color: s.bw ? '#fff' : P.text3, border: `1px solid ${P.accent}`, borderRadius: 3, padding: '6px 0', fontSize: 9, fontWeight: 700, letterSpacing: 1, textAlign: 'center', cursor: 'pointer', textTransform: 'uppercase' }}>BW</div>
+            {s.bw
+              ? <div style={{ background: P.bg, border: `1px solid ${P.border}`, color: P.text3, padding: '8px 4px', fontSize: 12, borderRadius: 3, textAlign: 'center', fontFamily: 'monospace' }}>—</div>
+              : <input type="number" inputMode="decimal" step="0.5" placeholder="kg" value={s.w} onChange={e => updateSet(ex.name, i, 'w', e.target.value)} style={inp(P)} />
+            }
+            <input type="number" inputMode="numeric" placeholder="reps" value={s.r} onChange={e => updateSet(ex.name, i, 'r', e.target.value)} style={inp(P)} />
+            <button onClick={() => removeSet(ex.name, i)} style={btnMini(P)}>−</button>
+          </div>
+        ))}
+        <button onClick={() => addSet(ex.name)} style={{ background: 'transparent', border: `1px solid ${P.accent}`, color: P.accent, width: '100%', padding: 6, borderRadius: 3, fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: 'pointer', marginTop: 6 }}>+ Set</button>
+      </div>);
+    })}
+    {!isLift && (() => {
+      const def = cardios.find(c => c.id === session.cardioId);
+      if (!def) return null;
+      return (<div style={{ background: P.bg2, border: `1px solid ${P.border}`, borderLeft: `2px solid ${P.accent}`, padding: '10px 12px', borderRadius: 3 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(def.fields.length, 3)},1fr)`, gap: 6 }}>
+          {def.fields.map(f => (
+            <div key={f.key}>
+              <div style={{ fontFamily: 'monospace', fontSize: 8, color: P.text3, textAlign: 'center', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 3 }}>{f.label} ({f.unit})</div>
+              <input type="number" inputMode="decimal" step={f.step} value={vals[f.key] ?? ''} onChange={e => setVals(p => ({ ...p, [f.key]: e.target.value }))} style={inp(P)} />
+            </div>
+          ))}
+        </div>
+        <div style={{ marginTop: 8 }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 8, color: P.text3, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 3 }}>Notes</div>
+          <input type="text" value={notes} onChange={e => setNotes(e.target.value)} style={{ ...inp(P), textAlign: 'left', padding: '8px 8px' }} />
+        </div>
+      </div>);
+    })()}
+    <button onClick={save} style={btnPrimary(P)}>Save Changes</button>
+  </div>);
+}
+
+// ═══ SETTINGS TAB ═══
+function SettingsTab({ P, days, saveDays, cardios, saveCardios, supplements, saveSupplements, prefs, savePrefs, sessions, cardioLog, bwLog, suppLog, saveSessions, saveCardioLog, saveBw, saveSuppLog, toast }) {
+  const [section, setSection] = useState(null);
+
+  if (section === 'days') return <DaysManager P={P} days={days} saveDays={saveDays} onClose={() => setSection(null)} toast={toast} />;
+  if (section === 'cardios') return <CardiosManager P={P} cardios={cardios} saveCardios={saveCardios} onClose={() => setSection(null)} toast={toast} />;
+  if (section === 'supplements') return <SupplementsManager P={P} supplements={supplements} saveSupplements={saveSupplements} onClose={() => setSection(null)} toast={toast} />;
+  if (section === 'appearance') return <AppearanceManager P={P} prefs={prefs} savePrefs={savePrefs} onClose={() => setSection(null)} toast={toast} />;
+  if (section === 'backup') return <BackupManager P={P} days={days} cardios={cardios} supplements={supplements} sessions={sessions} cardioLog={cardioLog} bwLog={bwLog} suppLog={suppLog} prefs={prefs}
+    saveDays={saveDays} saveCardios={saveCardios} saveSupplements={saveSupplements}
+    saveSessions={saveSessions} saveCardioLog={saveCardioLog} saveBw={saveBw} saveSuppLog={saveSuppLog} savePrefs={savePrefs}
+    onClose={() => setSection(null)} toast={toast} />;
+  if (section === 'sync') return <SyncSection P={P} onClose={() => setSection(null)} />;
+
+  const item = (id, label, sub) => (
+    <div key={id} onClick={() => setSection(id)} style={{ background: P.bg2, border: `1px solid ${P.border}`, borderLeft: `2px solid ${P.accent}`, padding: '12px 14px', borderRadius: 3, marginBottom: 6, cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: P.text, textTransform: 'uppercase', letterSpacing: 0.3 }}>{label}</div>
+        <div style={{ fontSize: 11, color: P.text2, marginTop: 2 }}>{sub}</div>
+      </div>
+      <div style={{ color: P.accent, fontSize: 18, paddingLeft: 10 }}>›</div>
+    </div>
+  );
+
+  return (<div>
+    <div style={lbl(P)}>Customize</div>
+    {item('days', 'Training Days', 'Add, edit, reorder, or delete training days')}
+    {item('cardios', 'Cardio Sessions', 'Add or edit conditioning sessions')}
+    {item('supplements', 'Supplements', 'Add or edit your supplement stack')}
+    {item('appearance', 'Appearance', `Theme: ${prefs.theme} · Color: ${prefs.accent}`)}
+    <div style={lbl(P, 'mt')}>Data</div>
+    {item('backup', 'Backup & Restore', 'Export or import a JSON backup')}
+    {item('sync', 'Cloud Sync', 'Currently unavailable — read more')}
+  </div>);
+}
+
+// ═══ DAYS MANAGER ═══
+function DaysManager({ P, days, saveDays, onClose, toast }) {
+  const [editing, setEditing] = useState(null);
+
+  if (editing) return <DayEditor P={P} day={days.find(d => d.id === editing)} days={days} saveDays={saveDays} onClose={() => setEditing(null)} toast={toast} />;
+
+  const addDay = () => {
+    const newDay = { id: uid('day'), name: 'New Day', exercises: [] };
+    saveDays([...days, newDay]);
+    setEditing(newDay.id);
+  };
+
+  const move = (idx, dir) => {
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= days.length) return;
+    const next = [...days];
+    [next[idx], next[newIdx]] = [next[newIdx], next[idx]];
+    saveDays(next);
+  };
+
+  return (<div>
+    <div onClick={onClose} style={{ display: 'flex', alignItems: 'center', gap: 6, color: P.accent, fontFamily: 'monospace', fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', cursor: 'pointer', padding: '6px 0', marginBottom: 6 }}>‹ Back</div>
+    <div style={lbl(P)}>Training Days</div>
+    {days.map((d, i) => (
+      <div key={d.id} style={{ background: P.bg2, border: `1px solid ${P.border}`, padding: '10px 12px', marginBottom: 6, borderRadius: 3, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div onClick={() => setEditing(d.id)} style={{ flex: 1, cursor: 'pointer' }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: P.text, textTransform: 'uppercase' }}>{d.name}</div>
+          <div style={{ fontSize: 10, color: P.text3, fontFamily: 'monospace', marginTop: 2 }}>{d.exercises.length} exercises</div>
+        </div>
+        <button onClick={() => move(i, -1)} disabled={i === 0} style={btnMini(P)}>↑</button>
+        <button onClick={() => move(i, 1)} disabled={i === days.length - 1} style={btnMini(P)}>↓</button>
+      </div>
+    ))}
+    <button onClick={addDay} style={btnPrimary(P)}>+ Add New Day</button>
+  </div>);
+}
+
+function DayEditor({ P, day, days, saveDays, onClose, toast }) {
+  const [name, setName] = useState(day.name);
+  const [exs, setExs] = useState(day.exercises);
+  const [newExName, setNewExName] = useState('');
+  const [newExWeighted, setNewExWeighted] = useState('always');
+
+  const save = async () => {
+    if (!name.trim()) { toast('Name required'); return; }
+    const updated = days.map(d => d.id === day.id ? { ...d, name: name.trim(), exercises: exs } : d);
+    await saveDays(updated);
+    toast('Day saved');
+    onClose();
+  };
+  const del = async () => {
+    if (!confirm('Delete this entire day?')) return;
+    await saveDays(days.filter(d => d.id !== day.id));
+    toast('Day deleted');
+    onClose();
+  };
+  const addEx = () => {
+    if (!newExName.trim()) { toast('Name required'); return; }
+    setExs([...exs, { id: uid('e'), name: newExName.trim(), weighted: newExWeighted }]);
+    setNewExName('');
+  };
+  const removeEx = (id) => setExs(exs.filter(e => e.id !== id));
+  const updateEx = (id, field, val) => setExs(exs.map(e => e.id === id ? { ...e, [field]: val } : e));
+  const moveEx = (id, dir) => {
+    const idx = exs.findIndex(e => e.id === id);
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= exs.length) return;
+    const next = [...exs];
+    [next[idx], next[newIdx]] = [next[newIdx], next[idx]];
+    setExs(next);
+  };
+
+  return (<div>
+    <div onClick={onClose} style={{ display: 'flex', alignItems: 'center', gap: 6, color: P.accent, fontFamily: 'monospace', fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', cursor: 'pointer', padding: '6px 0', marginBottom: 6 }}>‹ Back</div>
+    <div style={lbl(P)}>Day name</div>
+    <input type="text" value={name} onChange={e => setName(e.target.value)} style={{ ...inp(P), textAlign: 'left', padding: '10px 12px', fontSize: 14, marginBottom: 12 }} />
+    <div style={lbl(P)}>Exercises</div>
+    {exs.map((ex, i) => (
+      <div key={ex.id} style={{ background: P.bg2, border: `1px solid ${P.border}`, padding: '8px 10px', marginBottom: 4, borderRadius: 3 }}>
+        <input type="text" value={ex.name} onChange={e => updateEx(ex.id, 'name', e.target.value)} style={{ ...inp(P), textAlign: 'left', padding: '6px 8px', fontSize: 13, marginBottom: 6 }} />
+        <div style={{ display: 'flex', gap: 4, alignItems: 'center', fontSize: 10 }}>
+          <div onClick={() => updateEx(ex.id, 'weighted', 'always')} style={chip(P, ex.weighted === 'always')}>Weighted</div>
+          <div onClick={() => updateEx(ex.id, 'weighted', 'optional')} style={chip(P, ex.weighted === 'optional')}>BW / Opt</div>
+          <div style={{ flex: 1 }} />
+          <button onClick={() => moveEx(ex.id, -1)} disabled={i === 0} style={btnMini(P)}>↑</button>
+          <button onClick={() => moveEx(ex.id, 1)} disabled={i === exs.length - 1} style={btnMini(P)}>↓</button>
+          <button onClick={() => removeEx(ex.id)} style={{ ...btnMini(P), color: P.accent, borderColor: P.accent }}>×</button>
+        </div>
+      </div>
+    ))}
+    <div style={{ background: P.bg2, border: `1px dashed ${P.border2}`, padding: 10, marginTop: 8, borderRadius: 3 }}>
+      <input type="text" value={newExName} onChange={e => setNewExName(e.target.value)} placeholder="New exercise name" style={{ ...inp(P), textAlign: 'left', padding: '8px 10px', fontSize: 13, marginBottom: 6 }} />
+      <div style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
+        <div onClick={() => setNewExWeighted('always')} style={chip(P, newExWeighted === 'always')}>Weighted</div>
+        <div onClick={() => setNewExWeighted('optional')} style={chip(P, newExWeighted === 'optional')}>BW / Opt</div>
+      </div>
+      <button onClick={addEx} style={{ background: 'transparent', border: `1px solid ${P.accent}`, color: P.accent, width: '100%', padding: 8, borderRadius: 3, fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: 'pointer', textTransform: 'uppercase' }}>+ Add Exercise</button>
+    </div>
+    <button onClick={save} style={btnPrimary(P)}>Save Day</button>
+    <button onClick={del} style={{ ...btnPrimary(P), background: 'transparent', color: P.accent, border: `1px solid ${P.accent}`, marginTop: 6 }}>Delete Day</button>
+  </div>);
+}
+
+// ═══ CARDIOS MANAGER ═══
+function CardiosManager({ P, cardios, saveCardios, onClose, toast }) {
+  const [editing, setEditing] = useState(null);
+
+  if (editing) return <CardioEditor P={P} cardio={cardios.find(c => c.id === editing) || null} cardios={cardios} saveCardios={saveCardios} onClose={() => setEditing(null)} toast={toast} />;
+
+  const addCardio = () => {
+    const newCardio = { id: uid('cd'), name: 'New Cardio', fields: [
+      { key: 'duration', label: 'Duration', unit: 'min', step: '1' },
+    ]};
+    saveCardios([...cardios, newCardio]);
+    setEditing(newCardio.id);
+  };
+
+  return (<div>
+    <div onClick={onClose} style={{ display: 'flex', alignItems: 'center', gap: 6, color: P.accent, fontFamily: 'monospace', fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', cursor: 'pointer', padding: '6px 0', marginBottom: 6 }}>‹ Back</div>
+    <div style={lbl(P)}>Cardio Sessions</div>
+    {cardios.map(c => (
+      <div key={c.id} onClick={() => setEditing(c.id)} style={{ background: P.bg2, border: `1px solid ${P.border}`, padding: '10px 12px', marginBottom: 6, borderRadius: 3, cursor: 'pointer' }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: P.text, textTransform: 'uppercase' }}>{c.name}</div>
+        <div style={{ fontSize: 10, color: P.text3, fontFamily: 'monospace', marginTop: 2 }}>{c.fields.map(f => f.label).join(' · ')}</div>
+      </div>
+    ))}
+    <button onClick={addCardio} style={btnPrimary(P)}>+ Add Cardio</button>
+  </div>);
+}
+
+function CardioEditor({ P, cardio, cardios, saveCardios, onClose, toast }) {
+  const [name, setName] = useState(cardio.name);
+  const [fields, setFields] = useState(cardio.fields);
+  const [newKey, setNewKey] = useState('');
+  const [newLabel, setNewLabel] = useState('');
+  const [newUnit, setNewUnit] = useState('');
+
+  const save = async () => {
+    if (!name.trim()) { toast('Name required'); return; }
+    if (!fields.length) { toast('Need at least one field'); return; }
+    const updated = cardios.map(c => c.id === cardio.id ? { ...c, name: name.trim(), fields } : c);
+    await saveCardios(updated);
+    toast('Saved');
+    onClose();
+  };
+  const del = async () => {
+    if (!confirm('Delete this cardio?')) return;
+    await saveCardios(cardios.filter(c => c.id !== cardio.id));
+    toast('Deleted');
+    onClose();
+  };
+  const addField = () => {
+    const k = newKey.trim() || newLabel.trim().toLowerCase().replace(/\s+/g, '');
+    if (!k || !newLabel.trim()) { toast('Label required'); return; }
+    if (fields.some(f => f.key === k)) { toast('Key already exists'); return; }
+    setFields([...fields, { key: k, label: newLabel.trim(), unit: newUnit.trim() || '', step: '1' }]);
+    setNewKey(''); setNewLabel(''); setNewUnit('');
+  };
+  const removeField = (key) => setFields(fields.filter(f => f.key !== key));
+  const updateField = (key, fld, val) => setFields(fields.map(f => f.key === key ? { ...f, [fld]: val } : f));
+
+  return (<div>
+    <div onClick={onClose} style={{ display: 'flex', alignItems: 'center', gap: 6, color: P.accent, fontFamily: 'monospace', fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', cursor: 'pointer', padding: '6px 0', marginBottom: 6 }}>‹ Back</div>
+    <div style={lbl(P)}>Name</div>
+    <input type="text" value={name} onChange={e => setName(e.target.value)} style={{ ...inp(P), textAlign: 'left', padding: '10px 12px', fontSize: 14, marginBottom: 12 }} />
+    <div style={lbl(P)}>Fields to log</div>
+    {fields.map(f => (
+      <div key={f.key} style={{ background: P.bg2, border: `1px solid ${P.border}`, padding: '8px 10px', marginBottom: 4, borderRadius: 3, display: 'grid', gridTemplateColumns: '1fr 60px 24px', gap: 6, alignItems: 'center' }}>
+        <input type="text" value={f.label} onChange={e => updateField(f.key, 'label', e.target.value)} style={{ ...inp(P), textAlign: 'left', padding: '6px 8px', fontSize: 13 }} />
+        <input type="text" value={f.unit} onChange={e => updateField(f.key, 'unit', e.target.value)} style={{ ...inp(P), padding: '6px 4px', fontSize: 12 }} placeholder="unit" />
+        <button onClick={() => removeField(f.key)} style={{ ...btnMini(P), color: P.accent, borderColor: P.accent }}>×</button>
+      </div>
+    ))}
+    <div style={{ background: P.bg2, border: `1px dashed ${P.border2}`, padding: 10, marginTop: 8, borderRadius: 3 }}>
+      <input type="text" value={newLabel} onChange={e => setNewLabel(e.target.value)} placeholder="Field label (e.g. Distance)" style={{ ...inp(P), textAlign: 'left', padding: '8px 10px', fontSize: 13, marginBottom: 6 }} />
+      <input type="text" value={newUnit} onChange={e => setNewUnit(e.target.value)} placeholder="Unit (e.g. km)" style={{ ...inp(P), textAlign: 'left', padding: '8px 10px', fontSize: 13, marginBottom: 6 }} />
+      <button onClick={addField} style={{ background: 'transparent', border: `1px solid ${P.accent}`, color: P.accent, width: '100%', padding: 8, borderRadius: 3, fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: 'pointer', textTransform: 'uppercase' }}>+ Add Field</button>
+    </div>
+    <button onClick={save} style={btnPrimary(P)}>Save Cardio</button>
+    <button onClick={del} style={{ ...btnPrimary(P), background: 'transparent', color: P.accent, border: `1px solid ${P.accent}`, marginTop: 6 }}>Delete Cardio</button>
+  </div>);
+}
+
+// ═══ SUPPLEMENTS MANAGER ═══
+function SupplementsManager({ P, supplements, saveSupplements, onClose, toast }) {
+  const [editing, setEditing] = useState(null);
+
+  if (editing) return <SupplementEditor P={P} supplement={supplements.find(s => s.id === editing) || null} supplements={supplements} saveSupplements={saveSupplements} onClose={() => setEditing(null)} toast={toast} />;
+
+  const addSupp = () => {
+    const newSupp = { id: uid('sup'), name: 'New Supplement', dose: '', timing: '', slots: ['Daily'] };
+    saveSupplements([...supplements, newSupp]);
+    setEditing(newSupp.id);
+  };
+
+  return (<div>
+    <div onClick={onClose} style={{ display: 'flex', alignItems: 'center', gap: 6, color: P.accent, fontFamily: 'monospace', fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', cursor: 'pointer', padding: '6px 0', marginBottom: 6 }}>‹ Back</div>
+    <div style={lbl(P)}>Supplements</div>
+    {supplements.map(s => (
+      <div key={s.id} onClick={() => setEditing(s.id)} style={{ background: P.bg2, border: `1px solid ${P.border}`, padding: '10px 12px', marginBottom: 6, borderRadius: 3, cursor: 'pointer' }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: P.text, textTransform: 'uppercase' }}>{s.name}</div>
+        <div style={{ fontSize: 10, color: P.accent, fontFamily: 'monospace', marginTop: 2 }}>{s.dose} · {s.slots.length} slot{s.slots.length>1?'s':''}</div>
+      </div>
+    ))}
+    <button onClick={addSupp} style={btnPrimary(P)}>+ Add Supplement</button>
+  </div>);
+}
+
+function SupplementEditor({ P, supplement, supplements, saveSupplements, onClose, toast }) {
+  const [name, setName] = useState(supplement.name);
+  const [dose, setDose] = useState(supplement.dose);
+  const [timing, setTiming] = useState(supplement.timing || '');
+  const [slots, setSlots] = useState(supplement.slots);
+  const [newSlot, setNewSlot] = useState('');
+
+  const save = async () => {
+    if (!name.trim()) { toast('Name required'); return; }
+    if (!slots.length) { toast('Need at least one slot'); return; }
+    const updated = supplements.map(s => s.id === supplement.id ? { ...s, name: name.trim(), dose: dose.trim(), timing: timing.trim(), slots } : s);
+    await saveSupplements(updated);
+    toast('Saved');
+    onClose();
+  };
+  const del = async () => {
+    if (!confirm('Delete this supplement?')) return;
+    await saveSupplements(supplements.filter(s => s.id !== supplement.id));
+    toast('Deleted');
+    onClose();
+  };
+  const addSlot = () => {
+    if (!newSlot.trim()) { toast('Label required'); return; }
+    setSlots([...slots, newSlot.trim()]);
+    setNewSlot('');
+  };
+  const removeSlot = (idx) => setSlots(slots.filter((_, i) => i !== idx));
+  const updateSlot = (idx, val) => setSlots(slots.map((s, i) => i === idx ? val : s));
+
+  return (<div>
+    <div onClick={onClose} style={{ display: 'flex', alignItems: 'center', gap: 6, color: P.accent, fontFamily: 'monospace', fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', cursor: 'pointer', padding: '6px 0', marginBottom: 6 }}>‹ Back</div>
+    <div style={lbl(P)}>Name</div>
+    <input type="text" value={name} onChange={e => setName(e.target.value)} style={{ ...inp(P), textAlign: 'left', padding: '10px 12px', fontSize: 14, marginBottom: 8 }} />
+    <div style={lbl(P)}>Dose</div>
+    <input type="text" value={dose} onChange={e => setDose(e.target.value)} placeholder="e.g. 5 g" style={{ ...inp(P), textAlign: 'left', padding: '10px 12px', fontSize: 14, marginBottom: 8 }} />
+    <div style={lbl(P)}>When to take it</div>
+    <input type="text" value={timing} onChange={e => setTiming(e.target.value)} placeholder="e.g. Take before sleep" style={{ ...inp(P), textAlign: 'left', padding: '10px 12px', fontSize: 14, marginBottom: 12 }} />
+    <div style={lbl(P)}>Slots per day</div>
+    {slots.map((slot, i) => (
+      <div key={i} style={{ background: P.bg2, border: `1px solid ${P.border}`, padding: '8px 10px', marginBottom: 4, borderRadius: 3, display: 'grid', gridTemplateColumns: '1fr 24px', gap: 6 }}>
+        <input type="text" value={slot} onChange={e => updateSlot(i, e.target.value)} style={{ ...inp(P), textAlign: 'left', padding: '6px 8px', fontSize: 13 }} />
+        <button onClick={() => removeSlot(i)} style={{ ...btnMini(P), color: P.accent, borderColor: P.accent }}>×</button>
+      </div>
+    ))}
+    <div style={{ background: P.bg2, border: `1px dashed ${P.border2}`, padding: 10, marginTop: 8, borderRadius: 3 }}>
+      <input type="text" value={newSlot} onChange={e => setNewSlot(e.target.value)} placeholder="Slot label (e.g. Pre-training)" style={{ ...inp(P), textAlign: 'left', padding: '8px 10px', fontSize: 13, marginBottom: 6 }} />
+      <button onClick={addSlot} style={{ background: 'transparent', border: `1px solid ${P.accent}`, color: P.accent, width: '100%', padding: 8, borderRadius: 3, fontSize: 11, fontWeight: 700, letterSpacing: 1, cursor: 'pointer', textTransform: 'uppercase' }}>+ Add Slot</button>
+    </div>
+    <button onClick={save} style={btnPrimary(P)}>Save Supplement</button>
+    <button onClick={del} style={{ ...btnPrimary(P), background: 'transparent', color: P.accent, border: `1px solid ${P.accent}`, marginTop: 6 }}>Delete Supplement</button>
+  </div>);
+}
+
+// ═══ APPEARANCE ═══
+function AppearanceManager({ P, prefs, savePrefs, onClose, toast }) {
+  const [theme, setTheme] = useState(prefs.theme);
+  const [accent, setAccent] = useState(prefs.accent);
+  const presets = ['#cc1f1f', '#d4a017', '#3d8bff', '#0ea5e9', '#10b981', '#a855f7', '#ec4899', '#f97316'];
+
+  const save = async () => {
+    await savePrefs({ ...prefs, theme, accent });
+    toast('Applied');
+  };
+
+  const themeBtn = (val, label) => (
+    <div onClick={() => setTheme(val)} style={{ background: theme === val ? P.accent : 'transparent', color: theme === val ? '#fff' : P.text, border: `1px solid ${theme === val ? P.accent : P.border2}`, padding: '10px 14px', borderRadius: 4, fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', cursor: 'pointer', textAlign: 'center', flex: 1 }}>{label}</div>
+  );
+
+  return (<div>
+    <div onClick={onClose} style={{ display: 'flex', alignItems: 'center', gap: 6, color: P.accent, fontFamily: 'monospace', fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', cursor: 'pointer', padding: '6px 0', marginBottom: 6 }}>‹ Back</div>
+
+    <div style={lbl(P)}>Theme</div>
+    <div style={{ display: 'flex', gap: 4, marginBottom: 14 }}>
+      {themeBtn('light', 'Light')}
+      {themeBtn('dark', 'Dark')}
+      {themeBtn('auto', 'Auto')}
+    </div>
+    <div style={{ fontSize: 11, color: P.text3, marginBottom: 14, marginTop: -8, fontStyle: 'italic' }}>Auto follows your system theme.</div>
+
+    <div style={lbl(P)}>Accent color</div>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 4, marginBottom: 10 }}>
+      {presets.map(c => (
+        <div key={c} onClick={() => setAccent(c)} style={{ aspectRatio: '1/1', background: c, borderRadius: 4, cursor: 'pointer', border: accent === c ? `3px solid ${P.text}` : `1px solid ${P.border2}` }} />
+      ))}
+    </div>
+    <div style={{ display: 'flex', gap: 8, alignItems: 'center', background: P.bg2, border: `1px solid ${P.border}`, padding: '8px 12px', borderRadius: 4, marginBottom: 8 }}>
+      <label style={{ ...lbl(P), margin: 0 }}>Custom</label>
+      <input type="color" value={accent} onChange={e => setAccent(e.target.value)} style={{ width: 40, height: 30, border: 'none', background: 'transparent', cursor: 'pointer', padding: 0 }} />
+      <input type="text" value={accent} onChange={e => setAccent(e.target.value)} placeholder="#hex" style={{ ...inp(P), textAlign: 'left', padding: '6px 8px', fontSize: 13, flex: 1 }} />
+    </div>
+    <div style={{ background: accent, color: '#fff', padding: 12, borderRadius: 4, textAlign: 'center', fontSize: 12, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 10 }}>Preview</div>
+    <button onClick={save} style={btnPrimary(P)}>Apply</button>
+  </div>);
+}
+
+// ═══ BACKUP MANAGER ═══
+function BackupManager({ P, days, cardios, supplements, sessions, cardioLog, bwLog, suppLog, prefs,
+  saveDays, saveCardios, saveSupplements, saveSessions, saveCardioLog, saveBw, saveSuppLog, savePrefs,
+  onClose, toast }) {
+
+  const exportData = () => {
+    const data = {
+      version: 2,
+      exportedAt: new Date().toISOString(),
+      days, cardios, supplements,
+      sessions, cardioLog, bwLog, suppLog, prefs,
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `protocol-backup-${todayISO()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('Backup downloaded');
+  };
+
+  const importData = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (Array.isArray(data.days)) await saveDays(data.days);
+        if (Array.isArray(data.cardios)) await saveCardios(data.cardios);
+        if (Array.isArray(data.supplements)) await saveSupplements(data.supplements);
+        if (Array.isArray(data.sessions)) await saveSessions(data.sessions);
+        if (Array.isArray(data.cardioLog)) await saveCardioLog(data.cardioLog);
+        if (Array.isArray(data.bwLog)) await saveBw(data.bwLog);
+        if (data.suppLog && typeof data.suppLog === 'object') await saveSuppLog(data.suppLog);
+        if (data.prefs) await savePrefs(data.prefs);
+        toast('Backup restored');
+      } catch (err) {
+        toast('Import failed');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  const wipeAll = async () => {
+    if (!confirm('Erase ALL data? This cannot be undone.')) return;
+    if (!confirm('Are you absolutely sure?')) return;
+    await saveDays(DEFAULT_DAYS);
+    await saveCardios(DEFAULT_CARDIO);
+    await saveSupplements(DEFAULT_SUPPLEMENTS);
+    await saveSessions([]);
+    await saveCardioLog([]);
+    await saveBw([]);
+    await saveSuppLog({});
+    toast('Erased');
+  };
+
+  return (<div>
+    <div onClick={onClose} style={{ display: 'flex', alignItems: 'center', gap: 6, color: P.accent, fontFamily: 'monospace', fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', cursor: 'pointer', padding: '6px 0', marginBottom: 6 }}>‹ Back</div>
+
+    <div style={{ background: P.bg2, border: `1px solid ${P.border}`, padding: 12, borderRadius: 4, marginBottom: 8 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: P.text, textTransform: 'uppercase', marginBottom: 4 }}>Export Backup</div>
+      <div style={{ fontSize: 12, color: P.text2, marginBottom: 8, lineHeight: 1.5 }}>Download all your data as a JSON file. Saves your training, cardio, supplements, bodyweight, custom days, and preferences. Email it to yourself weekly.</div>
+      <button onClick={exportData} style={btnPrimary(P)}>Export to File</button>
+    </div>
+
+    <div style={{ background: P.bg2, border: `1px solid ${P.border}`, padding: 12, borderRadius: 4, marginBottom: 8 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: P.text, textTransform: 'uppercase', marginBottom: 4 }}>Import Backup</div>
+      <div style={{ fontSize: 12, color: P.text2, marginBottom: 8, lineHeight: 1.5 }}>Replaces ALL current data with the backup. Useful when restoring on a new device.</div>
+      <input type="file" id="import-file" accept=".json" style={{ display: 'none' }} onChange={importData} />
+      <button onClick={() => document.getElementById('import-file').click()} style={{ ...btnPrimary(P), background: 'transparent', color: P.text, border: `1px solid ${P.border2}` }}>Choose File</button>
+    </div>
+
+    <div style={{ background: P.bg2, border: `1px solid ${P.border}`, padding: 12, borderRadius: 4, marginBottom: 8 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: P.text, textTransform: 'uppercase', marginBottom: 4 }}>Storage</div>
+      <div style={{ fontSize: 12, color: P.text2, lineHeight: 1.5 }}>{sessions.length} lift · {cardioLog.length} cardio · {bwLog.length} BW · {Object.keys(suppLog).length} supp days</div>
+    </div>
+
+    <div style={{ background: P.bg2, border: `1px solid ${P.border}`, padding: 12, borderRadius: 4, marginBottom: 8 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: P.accent, textTransform: 'uppercase', marginBottom: 4 }}>Erase All Data</div>
+      <div style={{ fontSize: 12, color: P.text2, marginBottom: 8, lineHeight: 1.5 }}>Permanent. Resets to defaults. Export first if unsure.</div>
+      <button onClick={wipeAll} style={{ ...btnPrimary(P), background: P.accent }}>Erase Everything</button>
+    </div>
+  </div>);
+}
+
+// ═══ SYNC SECTION ═══
+function SyncSection({ P, onClose }) {
+  return (<div>
+    <div onClick={onClose} style={{ display: 'flex', alignItems: 'center', gap: 6, color: P.accent, fontFamily: 'monospace', fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', cursor: 'pointer', padding: '6px 0', marginBottom: 6 }}>‹ Back</div>
+    <div style={{ background: P.bg2, border: `1px solid ${P.border}`, borderLeft: `2px solid ${P.accent}`, padding: 14, borderRadius: 4, marginBottom: 8 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: P.text, textTransform: 'uppercase', marginBottom: 6 }}>Cloud Sync — Not Available</div>
+      <div style={{ fontSize: 12, color: P.text2, lineHeight: 1.7 }}>
+        This app runs entirely in your browser with no backend server. Real Google or Apple account sync requires a hosted database, authentication service, and ongoing infrastructure costs — none of which exist for this app.
+        <br /><br />
+        <strong style={{ color: P.text }}>What works instead:</strong>
+        <br /><br />
+        <strong style={{ color: P.accent }}>›</strong> The <strong>Backup &amp; Restore</strong> system in Settings exports a complete JSON file. Email it to yourself weekly. To migrate to a new phone, install the app there and import the JSON.
+        <br /><br />
+        <strong style={{ color: P.accent }}>›</strong> If you're signed into iCloud and Safari sync is on, your data is automatically shared between your own Apple devices via Apple's encrypted iCloud — never visible to anyone else.
+        <br /><br />
+        Real cloud sync is doable as a separate project (Firebase free tier would work), but it requires setup outside this app and the data would no longer be purely on your device.
+      </div>
+    </div>
+  </div>);
+}
+
+// ─── SHARED STYLES ───
+const inp = (P, w) => ({
+  background: P.bg, border: `1px solid ${P.border}`, color: P.text,
+  padding: '8px 4px', fontSize: 14, borderRadius: 3,
+  width: w ? w : '100%', fontFamily: 'monospace', textAlign: 'center',
+  WebkitAppearance: 'none',
+});
+const lbl = (P, mt) => ({ fontFamily: 'monospace', fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', color: P.text3, margin: mt === 'mt' ? '14px 0 6px 2px' : '4px 0 6px 2px' });
+const cardBase = (P) => ({ background: P.bg2, border: `1px solid ${P.border}`, padding: '10px 8px', borderRadius: 4, textAlign: 'left', display: 'flex', flexDirection: 'column' });
+const cardSel = (P) => ({ background: P.bg3, border: `1px solid ${P.accent}` });
+const btnPrimary = (P) => ({ background: P.accent, color: '#fff', border: 'none', padding: 14, width: '100%', borderRadius: 4, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', marginTop: 14, cursor: 'pointer' });
+const btnMini = (P) => ({ background: 'transparent', border: `1px solid ${P.border}`, color: P.text3, width: 24, height: 30, borderRadius: 3, fontSize: 14, cursor: 'pointer', padding: 0 });
+const chip = (P, active) => ({ background: active ? P.accent : 'transparent', color: active ? '#fff' : P.text2, border: `1px solid ${P.accent}`, borderRadius: 3, padding: '4px 8px', fontSize: 9, fontWeight: 700, letterSpacing: 1, textAlign: 'center', cursor: 'pointer', textTransform: 'uppercase' });
+const selSty = (P) => ({ background: P.bg2, border: `1px solid ${P.border}`, color: P.text, padding: '10px 12px', width: '100%', borderRadius: 4, fontSize: 14, marginBottom: 10, WebkitAppearance: 'none' });
+const statCard = (P) => ({ background: P.bg2, border: `1px solid ${P.border}`, padding: '10px 6px', borderRadius: 4, textAlign: 'center' });
+const statVal = (P) => ({ fontSize: 18, fontWeight: 900, color: P.accent, lineHeight: 1.1, fontFamily: 'monospace' });
+const statLbl = (P) => ({ fontSize: 8, letterSpacing: 1, textTransform: 'uppercase', color: P.text3, marginTop: 2, fontFamily: 'monospace' });
+const empty = (P) => ({ textAlign: 'center', padding: '40px 20px', color: P.text3, fontSize: 13 });
+
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<Protocol />);
+</script>
+</body>
+</html>
